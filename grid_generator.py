@@ -1,0 +1,3 @@
+"""
+Generates an empty puzzle.
+"""
