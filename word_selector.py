@@ -2,8 +2,12 @@
 Selects word to fill the puzzle-grid.
 """
 import random
+import collections
 from grid_locator import locate_grid
 from grid_display import display_grid_to_console
+from intersection_table import load_obj
+
+# ADD LENGTH FACTOR INTO NEIGBOUR VALUES?
 
 GRID_SIZE = 5
 TEST_GRID = [0,1,2,3,4,5,7,9,10,11,12,13,14,15,17,19,20,21,22,23,24,
@@ -13,14 +17,15 @@ TEST_GRID = [0,1,2,3,4,5,7,9,10,11,12,13,14,15,17,19,20,21,22,23,24,
              100,101,102,103,104,105,107,109,110,111,112,113,114,115,117,119,120,121,122,123,124,
             ]
 
+INTERSECTION_TABLE = load_obj('intersection_table')
+LENGTH_TABLE = load_obj('length_table')
+
 def get_longest_word(grid_setup):
     '''
     Given a dictionary of lists of word spaces, determines
     the longest wordspace.
     '''
-    combined_setup = []
-    for row_col_leo in grid_setup:
-        combined_setup += [each_wordspace for each_wordspace in grid_setup[row_col_leo]]
+    combined_setup = get_combined_grid_setup(grid_setup)
 
     longest_word_space = []
     for each_wordspace in combined_setup:
@@ -141,4 +146,46 @@ def remove_previous_word(letters, grid_setup, filled_wordspaces):
 
     # print("Removed last word")
 
-display_grid_to_console(select_word(), GRID_SIZE)
+def get_combined_grid_setup(grid_setup):
+    '''
+    Returns a list of all wordspaces, disregarding orientation.
+    '''
+    combined_setup = []
+    for row_col_leo in grid_setup:
+        combined_setup += [each_wordspace for each_wordspace in grid_setup[row_col_leo]]
+
+    return combined_setup
+
+def get_neigbouring_wordspaces(grid_setup, word_space):
+    '''
+    Returns the wordspaces which intersect with selected wordspace
+    and have not yet been filled.
+    '''
+    combined_setup = get_combined_grid_setup(grid_setup)
+
+    neighbours = []
+    for each_wordspace in combined_setup:
+        if bool(set(each_wordspace) & set(word_space)):
+            neighbours.append(each_wordspace)
+
+    return neighbours
+
+def get_wordspace_values(grid_setup):
+    '''
+    Determines wordspace values.
+    '''
+    combined_setup = get_combined_grid_setup(grid_setup)
+    
+    neighbour_values = collections.defaultdict(list)
+    for each_grid_wordspace in combined_setup:
+        for each_wordspace in combined_setup:
+            if bool(set(each_wordspace) & set(each_grid_wordspace)):
+                if each_wordspace != each_grid_wordspace:
+                    neighbour_values[tuple(each_grid_wordspace)].append(each_wordspace)
+
+    for each_wordspace in neighbour_values:
+        neighbour_values[each_wordspace] = len(neighbour_values[each_wordspace])
+
+    return neighbour_values
+
+# display_grid_to_console(select_word(), GRID_SIZE)

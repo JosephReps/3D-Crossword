@@ -18,3 +18,17 @@ def filter_wordlist():
         for item in word_list:
             f.write("%s\n" % item)
 
+def find_longest_word():
+    '''
+    Finds the longest word in the filtered word list.
+    '''
+    longest_word = ''
+    with open('filtered_words.txt', 'r') as f:
+
+        for line in f: 
+            if len(line) > len(longest_word):
+                longest_word = line
+
+    return longest_word
+
+# print(len("dichlorodiphenyltrichloroethane"))
