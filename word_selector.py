@@ -2,101 +2,55 @@
 Selects word to fill the puzzle-grid.
 """
 import random
-import collections
-from grid_locator import locate_grid
-from grid_display import display_grid_to_console
 from intersection_table import load_obj
-
-# ADD LENGTH FACTOR INTO NEIGBOUR VALUES?
-
-GRID_SIZE = 5
-TEST_GRID = [0,1,2,3,4,5,7,9,10,11,12,13,14,15,17,19,20,21,22,23,24,
-             25,27,29,35,37,39,45,47,49,
-             50,51,52,53,54,55,57,59,60,61,62,63,64,65,67,69,70,71,72,73,74,
-             75,77,79,85,87,89,95,97,99,
-             100,101,102,103,104,105,107,109,110,111,112,113,114,115,117,119,120,121,122,123,124,
-            ]
+from copy import deepcopy, copy
 
 INTERSECTION_TABLE = load_obj('intersection_table')
 LENGTH_TABLE = load_obj('length_table')
+FULL_CONSTRAINT_TABLE = load_obj('full_constraint_3_5')
+
+def get_combined_grid_setup(grid_setup):
+    '''
+    Returns a list of all wordspaces, disregarding orientation.
+
+    Parameters:
+        grid_setup <dict><str>:<list><int>: Dictionary containing all wordspaces.
+    '''
+    combined_setup = []
+    for row_col_leo in grid_setup:
+        combined_setup += [each_wordspace for each_wordspace in grid_setup[row_col_leo]]
+
+    return combined_setup
 
 def get_longest_word(grid_setup):
     '''
     Given a dictionary of lists of word spaces, determines
     the longest wordspace.
+
+    Parameters:
+        grid_setup <dict><str>:<list><int>: Dictionary containing all wordspaces.
     '''
     combined_setup = get_combined_grid_setup(grid_setup)
 
-    longest_word_space = []
+    longest_word_space = [[0]]
     for each_wordspace in combined_setup:
-        if len(each_wordspace) > len(longest_word_space):
-            longest_word_space = each_wordspace
+        if len(each_wordspace) > len(longest_word_space[0]):
+            longest_word_space = [each_wordspace]
 
-    return longest_word_space
+        elif len(each_wordspace) == len(longest_word_space[0]):
+            longest_word_space.append(each_wordspace)
 
-def select_word():
-    '''
-    '''
-    letters = {}
-    potential_words = []
-    used_words = []
-    filled_wordspaces = []
+    return random.choice(longest_word_space)
 
-    grid_setup = locate_grid(TEST_GRID, GRID_SIZE)
-
-    while grid_setup['columns'] or grid_setup['rows'] or grid_setup['leos']:
-
-        longest_word = get_longest_word(grid_setup)
-
-        intersecting_squares = check_wordspace_intersections(longest_word, letters)
-        # print(intersecting_squares)
-
-        with open('filtered_words.txt', 'r') as f:
-            for each_word in f:
-
-                # Last char is newline
-                if each_word not in used_words:
-                    if len(each_word[:-1]) == len(longest_word):
-                        if intersecting_squares:
-                            if check_word_fits(longest_word, letters, each_word, intersecting_squares):
-                                potential_words.append(each_word[:-1])
-                        else:
-                            potential_words.append(each_word[:-1])
-
-        if potential_words:
-            selected_word = random.choice(potential_words)
-        else:
-            selected_word = None
-        if selected_word:
-            used_words.append(selected_word)
-            potential_words = []
-            print(selected_word)
-            for each_square in longest_word:
-                letters[each_square] = selected_word[longest_word.index(each_square)]
-
-            if longest_word in grid_setup['columns']:
-                filled_wordspaces.append([-1] + longest_word)
-                grid_setup['columns'].remove(longest_word)
-            elif longest_word in grid_setup['rows']:
-                filled_wordspaces.append([-2] + longest_word)
-                grid_setup['rows'].remove(longest_word)
-            elif longest_word in grid_setup['leos']:
-                filled_wordspaces.append([-3] + longest_word)
-                grid_setup['leos'].remove(longest_word)
-            else:
-                break
-
-        else:
-            print("Removing last word")
-            # print(filled_wordspaces)
-            remove_previous_word(letters, grid_setup, filled_wordspaces)
-
-    return letters
-
-def check_wordspace_intersections(word_space, letters):
+def get_current_intersections(word_space, letters):
     '''
     Checks whether a word space intersects with a
     square which already has a letter in it.
+
+    Parameters:
+        wordspace <list><int>: A list of square numbers which make up the word space.
+        letters <dict><int>:<str>: A dictionary which contains square numbers as keys
+                                   and corresponding characters as values.
     '''
     intersecting_squares = []
     for each_square in word_space:
@@ -105,87 +59,128 @@ def check_wordspace_intersections(word_space, letters):
 
     return intersecting_squares
 
-def check_word_fits(word_space, letters, word, intersecting_squares):
+def create_constraint_key(wordspace, constraints, letters):
     '''
-    Checks whether a word will fit into a wordspace,
-    and format with other already-filled intersecting squares
-    appropriatley.
     '''
-    word_fits = True
-    for each_square in intersecting_squares:
-        if letters[each_square] != word[word_space.index(each_square)]:
-            word_fits = False
-            break
+    constraint_key = ['_']*len(wordspace)
 
-    return word_fits
+    if constraints:
+        for constraint in constraints:
+            constraint_key[wordspace.index(constraint)] = letters[constraint]
 
-def remove_previous_word(letters, grid_setup, filled_wordspaces):
+    return ("").join(constraint_key)
+
+def update_letters(letters, longest_word, selected_word):
     '''
-    Removes last word that was entered into puzzle.
     '''
-    last_word = filled_wordspaces[-1]
+    for each_square in longest_word:
 
-    last_intersecting = []
-    for each_wordspace in filled_wordspaces[:-1]:
-        for each_square in each_wordspace:
-            if each_square in last_word:
-                last_intersecting.append(each_square)
+        letters[each_square] = selected_word[longest_word.index(each_square)]
 
-    for each_square in last_word[1:]:
-        if each_square not in last_intersecting:
-            del letters[each_square]
+    return letters
 
-    if last_word[0] == -1:
-        grid_setup['columns'].append(last_word[1:])
-    if last_word[0] == -2:
-        grid_setup['rows'].append(last_word[1:])
+def update_grid_setup(longest_word, grid_setup):
+    '''
+    '''
+    if longest_word in grid_setup['columns']:
+        grid_setup['columns'].remove(longest_word)
+    elif longest_word in grid_setup['rows']:
+        grid_setup['rows'].remove(longest_word)
+    elif longest_word in grid_setup['hoes']:
+        grid_setup['hoes'].remove(longest_word)
+    
+    return grid_setup
+
+
+def select_word(grid_setup, letters, used_words):
+    '''
+    '''
+    letters = deepcopy(letters)
+    used_words = copy(used_words)
+    longest_word = get_longest_word(grid_setup)
+
+    intersecting_squares = get_current_intersections(longest_word, letters)
+
+    constraint_key = create_constraint_key(longest_word, intersecting_squares, letters)
+
+    potential_words = [word for word in FULL_CONSTRAINT_TABLE[constraint_key] if word not in used_words]
+    # print(len(potential_words))
+    selected_word = None
+    if potential_words:
+        if intersecting_squares:
+            selected_word = optimize_word_selection(potential_words, longest_word, grid_setup)
+
+        else:
+            selected_word = random.choice(potential_words)
+
+        # print(selected_word)
+
+        used_words.append(selected_word)
+
+        letters = update_letters(letters, longest_word, selected_word)
+
+        grid_setup = update_grid_setup(longest_word, grid_setup)
+
+    if selected_word:
+        return [letters, used_words, grid_setup]
     else:
-        grid_setup['leos'].append(last_word[1:])
+        return [longest_word, intersecting_squares]
 
-    filled_wordspaces.remove(last_word)
 
-    # print("Removed last word")
-
-def get_combined_grid_setup(grid_setup):
+def optimize_word_selection(potential_words, longest_word, grid_setup):
     '''
-    Returns a list of all wordspaces, disregarding orientation.
     '''
-    combined_setup = []
-    for row_col_leo in grid_setup:
-        combined_setup += [each_wordspace for each_wordspace in grid_setup[row_col_leo]]
+    empty_neighbours = get_empty_neighbours(grid_setup, longest_word)
 
-    return combined_setup
+    potential_word_dict = {}
+    for each_word in potential_words:
+        potential_word_dict[assign_word_value(each_word, empty_neighbours, longest_word)] = each_word
 
-def get_neigbouring_wordspaces(grid_setup, word_space):
+    return potential_word_dict[max(potential_word_dict.keys())]
+
+def get_empty_neighbours(grid_setup, word_space):
     '''
     Returns the wordspaces which intersect with selected wordspace
     and have not yet been filled.
+
+    Parameters:
+        grid_setup <dict>{str:<list>[int]}: Dictionary containing the wordspaces
+                                            of all the columns, rows and ....
+        wordspace <list><int>: A list of square numbers which make up the word space.
     '''
     combined_setup = get_combined_grid_setup(grid_setup)
 
     neighbours = []
     for each_wordspace in combined_setup:
         if bool(set(each_wordspace) & set(word_space)):
-            neighbours.append(each_wordspace)
+            if each_wordspace != word_space:
+                neighbours.append(tuple(each_wordspace))
 
     return neighbours
 
-def get_wordspace_values(grid_setup):
+def assign_word_value(each_word, empty_neighbours, longest_word):
     '''
-    Determines wordspace values.
+    Multiply rather than add so as to ensure the maximum 'balance'.
     '''
-    combined_setup = get_combined_grid_setup(grid_setup)
-    
-    neighbour_values = collections.defaultdict(list)
-    for each_grid_wordspace in combined_setup:
-        for each_wordspace in combined_setup:
-            if bool(set(each_wordspace) & set(each_grid_wordspace)):
-                if each_wordspace != each_grid_wordspace:
-                    neighbour_values[tuple(each_grid_wordspace)].append(each_wordspace)
+    neighbour_intersections = {}
 
-    for each_wordspace in neighbour_values:
-        neighbour_values[each_wordspace] = len(neighbour_values[each_wordspace])
+    for neighbour in empty_neighbours:
+        neighbour_intersections[neighbour] = [square for square in neighbour if square in longest_word][0]
 
-    return neighbour_values
+    value = 0
+    for neighbour in empty_neighbours:
+        constraint_key = create_neigbour_key(neighbour, neighbour_intersections[neighbour], each_word)
 
-# display_grid_to_console(select_word(), GRID_SIZE)
+        value *= len(FULL_CONSTRAINT_TABLE[constraint_key])
+
+    return value
+
+def create_neigbour_key(wordspace, constraint, each_word):
+    '''
+    '''
+    constraint_key = ['_']*len(wordspace)
+    constraint = wordspace.index(constraint)
+
+    constraint_key[constraint] = each_word[constraint]
+
+    return ('').join(constraint_key)
