@@ -1,6 +1,12 @@
 """
 Tests crossword algorithm efficiency against multiple grid setups.
 """
+# STILL IN PROGRESS# STILL IN PROGRESS# STILL IN PROGRESS
+# STILL IN PROGRESS
+# STILL IN PROGRESS
+# STILL IN PROGRESS
+# STILL IN PROGRESS
+
 import time
 from puzzle_solver import solve_puzzle
 # from collections import defaultdict

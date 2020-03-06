@@ -4,6 +4,11 @@ Generates random crossword grids.
 import itertools
 import json
 
+# STILL IN PROGRESS# STILL IN PROGRESS
+# STILL IN PROGRESS
+# STILL IN PROGRESS
+# STILL IN PROGRESS
+
 def generate_random_grids(grid_size, number_empty_squares):
     '''
     Generates a list of valid grids.

@@ -1,21 +1,26 @@
 """
 Displays the crossword grid.
 """
+from math import sqrt  
 from grid_locator import get_layer_squares
-from math import sqrt
-            
 
 def display_grid_to_console(letters, grid_size):
     '''
     Displays the puzzle grid to the console, printing each layer
     seperatley.
+
+    Parameters:
+        grid_size |<int>| The size of the grid.
+        letters |<dict><int><str>| A dictionary which contains square numbers as keys
+                                   and corresponding characters as values.
     '''
     layer_squares = get_layer_squares(grid_size)
 
     for each_layer in layer_squares:
         for each_square in layer_squares[each_layer]:
             if each_square in letters:
-                layer_squares[each_layer][layer_squares[each_layer].index(each_square)] = letters[each_square]
+                layer_squares[each_layer][
+                              layer_squares[each_layer].index(each_square)] = letters[each_square]
 
             else:
                 layer_squares[each_layer][layer_squares[each_layer].index(each_square)] = ' '
@@ -28,8 +33,3 @@ def display_grid_to_console(letters, grid_size):
             print(layer_squares[each_layer][row:each_row*grid_size])
             row = each_row*grid_size
 
-    return len(letters)
-        
-
-# print(layer_squares)
-# display_grid_to_console(LETTERS, GRID_SIZE)

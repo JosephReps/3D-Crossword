@@ -8,6 +8,8 @@ from collections import defaultdict
 import collections
 import pickle
 
+# NEED TO FINISH/UPDATE DOCUMENTATION
+
 def create_intersection_table():
     '''
     Creates a dictionary grouping words into character index position.

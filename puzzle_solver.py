@@ -1,16 +1,34 @@
 """
 Solves crossword puzzles.
 """
-from grid_display import display_grid_to_console
+# from grid_display import display_grid_to_console
 from grid_locator import locate_grid
 from copy import deepcopy
 import word_selector
 import time
 
-g = [0, 1, 2, 3, 4, 5, 7, 9, 10, 12, 14, 15, 17, 19, 20, 21, 22, 23, 24, 25, 27, 29, 45, 49, 50, 51, 52, 53, 54, 55, 57, 59, 60, 61, 62, 63, 64, 65, 67, 69, 70, 71, 72, 73, 74, 75, 77, 78, 79, 95, 97, 99, 100, 101, 102, 103, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119, 120, 121, 122, 123, 124, 47]
-s = 5
+# Example grid and size
+# g = [0, 1, 2, 3, 4, 5, 7, 9, 10, 12, 14, 15, 17, 19, 20, 21, 22, 23, 24, 25, 27, 29, 
+#       45, 49, 50, 51, 52, 53, 54, 55, 57, 59, 60, 61, 62, 63, 64, 65, 67, 69, 70, 71, 72, 
+#       73, 74, 75, 77, 78, 79, 95, 97, 99, 100, 101, 102, 103, 104, 105, 107, 109, 110, 112, 
+#       114, 115, 117, 119, 120, 121, 122, 123, 124, 47]
+# s = 5
+
 def solve_puzzle(grid, grid_size, allocated_time, benchmarking=False):
     '''
+    Attempts to solve a 3D crossword puzzle grid within an allocated time.
+
+    Algorithm explanation can be found in the Readme.
+
+    Parameters:
+        grid_size |<int>| The size of the grid.
+        grid |<list><int>| List of active (white) grid square numbers.
+        allocated_time |<int>| The amount of time allocated for the puzzle 
+                               to solve the given grid.
+
+    Returns:
+        letters |<dict><int><str>| A dictionary which contains square numbers as keys
+                                   and corresponding characters as values.
     '''
     letters = {}
     used_words = []

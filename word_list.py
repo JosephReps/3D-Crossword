@@ -33,3 +33,13 @@ def find_longest_word():
                 longest_word = line
 
     return longest_word
+
+def filter_length_3():
+    '''
+    Creates a file of words of length 3.
+    '''
+    with open('new/filtered_words.txt', 'r') as f:
+        with open('new/filtered_words_3.txt', 'w') as f2:
+            for line in f: 
+                if len(line) == 4:
+                    f2.write(line)
